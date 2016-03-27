@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item
+        android:id="@+id/power"
+        android:icon="@drawable/power_off"
+        android:showAsAction="always"
+        android:title="On/Off"></item>
+    <item
+        android:id="@+id/urbanLeft"
+        android:showAsAction="never"
+        android:title="@string/urban_label"></item>
+    <item
+        android:id="@+id/urbanRight"
+        android:showAsAction="never"
+        android:title="@string/urban_label_right"></item>
+    <item
+        android:id="@+id/goldRush"
+        android:showAsAction="never"
+        android:title="@string/gold_label"></item>
+    <item
+        android:id="@+id/dragRace"
+        android:showAsAction="never"
+        android:title="@string/drag_label"></item>
+    <item
+        android:id="@+id/test"
+        android:showAsAction="never"
+        android:title="@string/test_label"></item>
+    <item
+        android:id="@+id/testUltrasonic"
+        android:showAsAction="never"
+        android:title="@string/test_ultra_label"></item>
+    <item
+        android:id="@+id/showcase1"
+        android:showAsAction="never"
+        android:title="@string/showcase_1_label"></item>
+    <item
+        android:id="@+id/showcase2"
+        android:showAsAction="never"
+        android:title="@string/showcase_2_label"></item>
+</menu>
