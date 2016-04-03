@@ -27,10 +27,10 @@ public class UltraSonicSensor {
     private IOIO ioio;
     private TextView log;
     private ScrollView scroller;
-    private int frontDistance;
-    private int frontLeftDistance;
-    private int backLeftDistance;
-    private int rightDistance;
+    private double frontDistance;
+    private double frontLeftDistance;
+    private double backLeftDistance;
+    private double rightDistance;
     private DigitalOutput frontStrobe;
     private DigitalOutput rearStrobe;
     private DigitalOutput leftStrobe;
@@ -53,6 +53,11 @@ public class UltraSonicSensor {
     static int timeout = 11;
     public static final double MAX_DISTANCE_MM = timeout * 1000 * MM_PER_MICROSEC;
     boolean getDurationTimedOut;
+    int storageSpace = 4;
+    public double[] frontDistances = new double[storageSpace];
+    public double[] frontLeftDistances = new double[storageSpace];
+    public double[] backLeftDistances = new double[storageSpace];
+    public double[] rightDistances = new double[storageSpace];
 
     /**
      * Constructor of a UltraSonicSensors instance.
@@ -105,21 +110,60 @@ public class UltraSonicSensor {
     }
 
     public void readAll() throws ConnectionLostException, InterruptedException {
-        backLeftDistance = read(leftStrobe, LEFT_ULTRASONIC_INPUT_PIN);
-        frontDistance = read(frontStrobe, FRONT_ULTRASONIC_INPUT_PIN);
-        rightDistance = read(rightStrobe, RIGHT_ULTRASONIC_INPUT_PIN);
-        frontLeftDistance = read(rearStrobe, REAR_ULTRASONIC_INPUT_PIN);
+        backLeftDistance = read(leftStrobe, LEFT_ULTRASONIC_INPUT_PIN) * MM_PER_MICROSEC;
+        frontDistance = read(frontStrobe, FRONT_ULTRASONIC_INPUT_PIN) * MM_PER_MICROSEC;
+        rightDistance = read(rightStrobe, RIGHT_ULTRASONIC_INPUT_PIN) * MM_PER_MICROSEC;
+        frontLeftDistance = read(rearStrobe, REAR_ULTRASONIC_INPUT_PIN) * MM_PER_MICROSEC;
+        updateArrays();
+    }
+
+    public void readExcludeRight() throws ConnectionLostException, InterruptedException {
+        backLeftDistance = read(leftStrobe, LEFT_ULTRASONIC_INPUT_PIN) * MM_PER_MICROSEC;
+        frontDistance = read(frontStrobe, FRONT_ULTRASONIC_INPUT_PIN) * MM_PER_MICROSEC;
+        frontLeftDistance = read(rearStrobe, REAR_ULTRASONIC_INPUT_PIN) * MM_PER_MICROSEC;
+        updateArrays();
+    }
+
+    public void readFront() throws ConnectionLostException, InterruptedException {
+        frontDistance = read(frontStrobe, FRONT_ULTRASONIC_INPUT_PIN) * MM_PER_MICROSEC;
+        updateArrays();
+    }
+
+    private void updateArrays() {
+        for (int i = storageSpace - 1; i >= 1; i--) {
+            frontDistances[i] = frontDistances[i - 1];
+            frontLeftDistances[i] = frontLeftDistances[i - 1];
+            backLeftDistances[i] = backLeftDistances[i - 1];
+            rightDistances[i] = rightDistances[i - 1];
+        }
+        frontDistances[0] = frontDistance;
+        frontLeftDistances[0] = frontLeftDistance;
+        backLeftDistances[0] = backLeftDistance;
+        rightDistances[0] = rightDistance;
     }
 
     public void startThread() {
+        for (int i = 0; i < storageSpace; i++) {
+            try {
+                Thread.sleep(10);
+//                readAll();
+                readFront();
+            } catch (ConnectionLostException e) {
+                e.printStackTrace();
+                break;
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
         Thread t = new Thread(new Runnable() {
 
             @Override
             public void run() {
                 while (true) {
-                    SystemClock.sleep(100);
                     try {
-                        readAll();
+                        Thread.sleep(10);
+//                        readAll();
+                        readFront();
                     } catch (ConnectionLostException e) {
                         e.printStackTrace();
                         break;
@@ -130,12 +174,6 @@ public class UltraSonicSensor {
             }
         });
         t.start();
-    }
-
-    public void readExcludeRight() throws ConnectionLostException, InterruptedException {
-        backLeftDistance = read(leftStrobe, LEFT_ULTRASONIC_INPUT_PIN);
-        frontDistance = read(frontStrobe, FRONT_ULTRASONIC_INPUT_PIN);
-        frontLeftDistance = read(rearStrobe, REAR_ULTRASONIC_INPUT_PIN);
     }
 
     private int read(DigitalOutput strobe, int inputPin) throws ConnectionLostException, InterruptedException // Order of following statements is very important...do not change

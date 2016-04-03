@@ -86,7 +86,7 @@ public class VicsWagon {
     private int MAX_FM_SPEED_PERIOD = 60000;
     private int MIN_FM_SPEED_PERIOD = 600;
     private static final double STEPS_PER_MM = 0.63;
-    private static final double STEPS_PER_DEGREE = 1.38;
+    private static final double STEPS_PER_DEGREE = 1.31;//1.36 good for 90 degrees as of 4/2/16. 1.31 for 180
     private int timePerPush = 6250;// measured in 16 microseconds
     private double accelerationStraight = 0.0000001024;// measured in steps/((16
     // microseconds)^2)
@@ -262,10 +262,10 @@ public class VicsWagon {
     }
 
     public void test() throws ConnectionLostException, InterruptedException {
-        //		spinRight(90);
-        if (seesIr) {
-            log1("See IR");
-        }
+        spinRight(90);
+//        if (seesIr) {
+//            log1("See IR");
+//        }
         SystemClock.sleep(250);
     }
 
@@ -290,38 +290,41 @@ public class VicsWagon {
     }
 
     public void showcase1() {
-        goForward(200);
-        goBackward(200);
-        goForward(200);
-        goBackward(200);
-        spinLeft(30);
-        spinRight(60);
-        spinLeft(60);
-        spinRight(60);
-        spinLeft(30);
+        while (true) {
+            goForward(200);
+            goBackward(200);
+            goForward(200);
+            goBackward(200);
+            spinLeft(30);
+            spinRight(60);
+            spinLeft(60);
+            spinRight(60);
+            spinLeft(30);
+        }
     }
 
     public void showcase2() throws ConnectionLostException, InterruptedException {
         setDirection(FORWARD_LEFT, FORWARD_RIGHT);
-        double span = 25;
+        double span = 25;//mm
         int steps = (int) ((span * STEPS_PER_MM) / 2.0 + 0.5) * 2;
-        int minPeriod = Math.max((int) (11875 / (double) steps), this.minPeriod);
-        sonar.readExcludeRight();
+//            int minPeriod = Math.max((int) (11875 / (double) steps), this.minPeriod);//The number 11875 ensures that the duration is never shorter than 190 (gives time for sensor reading)
+//            sonar.readFront();
         startSequencer();
-        double stopDistance = 150;
-        double prevFrontDistance = stopDistance;
+        double stopDistance = 200;
         for (int i = 0; i < 10; i++) {
-            prevFrontDistance = sonar.getFrontDistance();
             accelerateUp(steps, accelerationStraight, 1, 1, minPeriod);
-            waitToFinishAndReadUltraExcludeRight();
-            if (sonar.getFrontDistance() <= stopDistance && prevFrontDistance <= stopDistance) {
+            log1(String.valueOf(sonar.getFrontDistance()));
+            waitToFinish();
+            if (sonar.frontDistances[0] <= stopDistance && sonar.frontDistances[1] <= stopDistance) {
+                log1("WALL");
                 break;
             }
         }
-        accelerateDownTo0(accelerationSlowDown);
-        waitToFinish();
+        if (accelerateDownTo0(accelerationSlowDown)) {
+            waitToFinish();
+        }
         sequencer.pause();
-        SystemClock.sleep(1000);
+        SystemClock.sleep(500);
         spinRight(180);
     }
 
@@ -972,19 +975,22 @@ public class VicsWagon {
         currentVelocity = Math.min(velocity, 1 / (double) minPeriod);
     }
 
-    private void accelerateDownTo0(double acceleration) throws ConnectionLostException, InterruptedException {
+    private boolean accelerateDownTo0(double acceleration) throws ConnectionLostException, InterruptedException {
         double velocity = currentVelocity;
         int period;
         velocity -= acceleration * timePerPush;
+        boolean slowedDown = false;
         while (velocity >= timePerPush * acceleration) {
             period = Math.max((int) (1 / velocity), minPeriod);
             stepperRightFMspeedCue.period = period;
             stepperLeftFMspeedCue.period = period;
             pushCue(timePerPush);
             velocity -= acceleration * timePerPush;
+            slowedDown = true;
         }
-        pushCue(timePerPush * 9);
-        currentVelocity = 0;
+//        pushCue(timePerPush * 9);
+        currentVelocity = accelerationStraight * timePerPush;
+        return slowedDown;
     }
 
     // public void followWallLeft(int distance) throws Exception {
@@ -1327,6 +1333,12 @@ public class VicsWagon {
         sequencer.waitEventType(Sequencer.Event.Type.STALLED);
     }
 
+    private void waitToFinishAndReadFrontUltra() throws ConnectionLostException, InterruptedException {
+        sequencer.waitEventType(Sequencer.Event.Type.CUE_STARTED);
+        sonar.readFront();
+        sequencer.waitEventType(Sequencer.Event.Type.STALLED);
+    }
+
     private void waitUntilFrontWall(int distanceFromWall) throws ConnectionLostException, InterruptedException {
         readUltrasonic();
         while (sonar.getFrontDistance() > distanceFromWall) {
@@ -1482,8 +1494,8 @@ public class VicsWagon {
             setUpMotorControllerChipForWaveDrive();
             frontIRSensorInput = ioio_.openPulseInput(new DigitalInput.Spec(IR_SENSOR_INPUT_PIN), PulseInput.ClockRate.RATE_62KHz, PulseInput.PulseMode.NEGATIVE, false);
             setupIRThread();
-            sonar.startThread();
             openSequencer();
+            sonar.startThread();
             spinTime = System.currentTimeMillis();
         } catch (Exception e) {
         }
