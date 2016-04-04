@@ -130,7 +130,7 @@ public class VicsWagon {
     ArrayList<GridSquare> gridSquares = new ArrayList<GridSquare>();
     ArrayList<GridSquare> gridSquares2 = new ArrayList<GridSquare>();
     private int counter = -1;
-    int openSpaceSideDistance = 75;//600;
+    int openSpaceSideDistance = 750;//600;
     int openSpaceFrontDistance = 325;//500;
     double desiredWallDistance = 227.25;
     double tooCloseToTurnDistance = 177.25;
@@ -429,7 +429,7 @@ public class VicsWagon {
                 }
                 currentVelocity = accelerationStraight * timePerPush;
                 followWallOneCell();
-                if (seesIr) {//(i == gridSquares.size() - 1) {
+                if (seesIr || (i == gridSquares.size() - 1)) {//(i == gridSquares.size() - 1) {
                     readUltrasonic();
                     forwardAlign();
                     victoryDance();
@@ -1495,7 +1495,7 @@ public class VicsWagon {
             frontIRSensorInput = ioio_.openPulseInput(new DigitalInput.Spec(IR_SENSOR_INPUT_PIN), PulseInput.ClockRate.RATE_62KHz, PulseInput.PulseMode.NEGATIVE, false);
             setupIRThread();
             openSequencer();
-            sonar.startThread();
+//            sonar.startThread();
             spinTime = System.currentTimeMillis();
         } catch (Exception e) {
         }

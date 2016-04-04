@@ -142,7 +142,7 @@ public class UltraSonicSensor {
         rightDistances[0] = rightDistance;
     }
 
-    public void startThread() {
+    public void startThread() {//TODO for iARoC 2016: Use this thread. Get rid of anomalies by using last 3 reads. If middle one is different by at least x amount from both the other 2, don't save any values. If the middle one is not different, it is not an anomaly and so that value is saved. The most recent reading is not recorded as the distance because it is uncertain if it is an anomaly.
         for (int i = 0; i < storageSpace; i++) {
             try {
                 Thread.sleep(10);
@@ -219,19 +219,19 @@ public class UltraSonicSensor {
     }
 
     public synchronized double getBackLeftDistance() {
-        return backLeftDistance * MM_PER_MICROSEC;
+        return backLeftDistance;
     }
 
     public synchronized double getFrontDistance() {
-        return frontDistance * MM_PER_MICROSEC;
+        return frontDistance;
     }
 
     public synchronized double getRightDistance() {
-        return rightDistance * MM_PER_MICROSEC;
+        return rightDistance;
     }
 
     public synchronized double getFrontLeftDistance() {
-        return frontLeftDistance * MM_PER_MICROSEC;
+        return frontLeftDistance;
     }
 
     public void closeConnection() {
